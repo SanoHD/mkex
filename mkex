@@ -1,0 +1,76 @@
+#! /usr/bin/python3
+import sys, os
+
+filename = os.path.abspath(sys.argv[-1])
+
+
+HELP = """
+Make Executable (mkex) Help:
+-------------------------------
+Usage:
+	mkex [args] filename.xyz
+
+Arguments:
+	-P		Use Python 3 shebang
+	-p		Use Python 2 shebang
+	-b		Use Bash shebang
+	-c "shebang"	Use custom shebang
+	-v		Verbose mode
+	--noprint 	Doesnt print anything
+	--help		Prints help
+"""
+
+if "--help" in sys.argv:
+	print(HELP)
+	sys.exit()
+
+def verbose(text):
+	if "-v" in sys.argv and not "--noprint" in sys.argv:
+		print("mkex:"+text)
+
+verbose("Using "+filename.split("/")[-1])
+verbose("Defining shebang")
+
+shebang = ""
+if "-P" in sys.argv:
+	shebang = "#! /usr/bin/python3"
+
+elif "-p" in sys.argv:
+	shebang = "#! /usr/bin/python"
+
+elif "-b" in sys.argv:
+	shebang = "#! /usr/bin/bash"
+
+elif "-c" in sys.argv:
+	# Custom shebang
+	shebang = sys.argv[sys.argv.index("-c")+1]
+
+else:
+	print("No shebang. Using Python3")
+	shebang = "#! /usr/bin/python3"
+	#print("Invalid usage. Try --help.")
+	#sys.exit()
+
+if "--noprint" in sys.argv:
+	if "-v" in sys.argv:
+		del sys.argv[sys.argv.index("-v")]
+
+verbose("Reading file")
+binfile = []
+with open(filename) as file:
+	fr = file.read().split("\n")
+	binfile = fr
+	if not fr[0][:2] == "#!":
+		binfile.insert(0, shebang)
+
+prg = filename.split(os.sep)[-1].split(".")[0]
+
+verbose("Writing new file")
+with open("/usr/bin/"+prg,"w+") as bfile:
+	for line in binfile:
+		bfile.write(line+"\n")
+verbose("chmod")
+os.system("chmod +x /usr/bin/"+str(prg))
+if not "--noprint" in sys.argv:
+	print("Done")
+
